@@ -1,0 +1,23 @@
+{
+  "version": "0.2.1",
+  "description": "CLI for pay — USDC payment infrastructure for AI agents",
+  "homepage": "https://pay-skill.com",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/pay-skill/pay-cli/releases/download/v0.2.1/pay-windows-amd64.exe",
+      "hash": "PLACEHOLDER"
+    }
+  },
+  "bin": [["pay-windows-amd64.exe", "pay"]],
+  "checkver": {
+    "github": "https://github.com/pay-skill/pay-cli"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/pay-skill/pay-cli/releases/download/v$version/pay-windows-amd64.exe"
+      }
+    }
+  }
+}

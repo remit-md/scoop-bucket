@@ -1,0 +1,42 @@
+name: Update Manifest
+
+on:
+  repository_dispatch:
+    types: [release-published]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Extract version
+        id: version
+        run: |
+          TAG="${{ github.event.client_payload.tag }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "ver=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download binary and compute SHA256
+        run: |
+          VERSION="${{ steps.version.outputs.tag }}"
+          URL="https://github.com/pay-skill/pay-cli/releases/download/${VERSION}/pay-windows-amd64.exe"
+          curl -fsSL "$URL" -o pay-windows-amd64.exe
+          SHA=$(sha256sum pay-windows-amd64.exe | cut -d' ' -f1)
+          echo "SHA=${SHA}" >> "$GITHUB_ENV"
+
+      - name: Update manifest
+        run: |
+          VER="${{ steps.version.outputs.ver }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          jq --arg v "$VER" --arg sha "$SHA" --arg tag "$TAG" \
+            '.version = $v | .architecture."64bit".url = "https://github.com/pay-skill/pay-cli/releases/download/\($tag)/pay-windows-amd64.exe" | .architecture."64bit".hash = $sha' \
+            pay.json > tmp.json && mv tmp.json pay.json
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pay.json
+          git diff --cached --quiet || git commit -m "update pay to ${{ steps.version.outputs.tag }}"
+          git push
